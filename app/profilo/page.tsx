@@ -12,21 +12,24 @@ const Profilo = () => {
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [products, setProducts] = useState<ProductModel[]>([]);
 
-  const categoriesFetch = async () => {
+  const getCategories = async () => {
     try {
       const response = await axios.get("/api/categories");
-      setCategories(response.data);
-      return response.data;
-    } catch (error) {
-      console.log(error);
+      setCategories(response.data.data);
+    } catch (error: any) {
+      console.error(error.message);
     }
   };
+
+  useEffect(() => {
+    getCategories();
+  }, []);
 
   const productsFetch = async () => {
     try {
       const response = await axios.get("/api/products");
-      setProducts(response.data);
-      return response.data;
+      setProducts(response.data.data);
+      return response.data.data;
     } catch (error) {
       console.log(error);
     }
@@ -36,6 +39,7 @@ const Profilo = () => {
     e.preventDefault();
     try {
       axios.post("/api/categories", categoryPrompt).then((res) => {
+        setCategories([...categories, res.data]);
         console.log(res.data);
       });
     } catch (error) {
@@ -47,6 +51,7 @@ const Profilo = () => {
     e.preventDefault();
     try {
       axios.post("/api/products", categoryPrompt).then((res) => {
+        setProducts([...products, res.data]);
         console.log(res.data);
       });
     } catch (error) {
@@ -54,12 +59,12 @@ const Profilo = () => {
     }
 
     useEffect(() => {
-      categoriesFetch();
       productsFetch();
     }, []);
   };
 
   const [categoryPrompt, setCategoryPrompt] = useState<CategoryModel>({
+    _id: "",
     name: "",
     description: "",
   });
@@ -73,7 +78,6 @@ const Profilo = () => {
     TopProduct: "",
     NewArrival: "",
     countInStock: 0,
-    images: [],
     features: [],
     rating: 0,
   });
@@ -155,6 +159,12 @@ const Profilo = () => {
                 </form>
               </div>
               <div>
+                {categories &&
+                  categories.map((category) => (
+                    <div key={category._id}>{category.name}</div>
+                  ))}
+              </div>
+              <div>
                 <form
                   onSubmit={handleSubmitProducts}
                   className="w-full flex flex-col gap-4 mt-4 items-center"
@@ -176,7 +186,7 @@ const Profilo = () => {
                       name="name"
                       id="name"
                       placeholder="Inerisci il nome del prodotto"
-                      value={categoryPrompt.name}
+                      value={productPrompt.name}
                       onChange={(e) =>
                         setProductPrompt({
                           ...productPrompt,
@@ -206,21 +216,22 @@ const Profilo = () => {
                       }
                     />
                   </div>
+
                   <div className="w-full flex flex-col gap-2">
                     <label
-                      htmlFor="description"
-                      className="text-gray-600 text-sm font-semibold text-center"
+                      htmlFor="category"
+                      className="text-gray-600 text-sm font-semibold"
                     >
-                      Categoriessssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+                      Categoria
                     </label>
                     <select
                       className="w-full border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                      name="name"
-                      id="name"
-                      value={categoryPrompt.name}
+                      name="category"
+                      id="category"
+                      value={categories.map((cat) => cat.name).toString()}
                       onChange={(e) =>
-                        setCategoryPrompt({
-                          ...categoryPrompt,
+                        setProductPrompt({
+                          ...productPrompt,
                           name: e.target.value,
                         })
                       }
@@ -256,10 +267,52 @@ const Profilo = () => {
                   </div>
                   <div className="w-full flex flex-col gap-2">
                     <label
+                      htmlFor="imageUrl"
+                      className="text-gray-600 text-sm font-semibold text-center"
+                    >
+                      Immagini
+                    </label>
+                    <textarea
+                      className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                      name="imageUrl"
+                      id="imageUrl"
+                      placeholder="Enter a description for your post"
+                      value={productPrompt.imageUrl}
+                      onChange={(e) =>
+                        setProductPrompt({
+                          ...productPrompt,
+                          imageUrl: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="w-full flex flex-col gap-2">
+                    <label
+                      htmlFor="sizes"
+                      className="text-gray-600 text-sm font-semibold text-center"
+                    >
+                      Sizes
+                    </label>
+                    <textarea
+                      className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                      name="sizes"
+                      id="sizes"
+                      placeholder="Inserisci una taglia per il prodotto"
+                      value={productPrompt.description}
+                      onChange={(e) =>
+                        setProductPrompt({
+                          ...productPrompt,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="w-full flex flex-col gap-2">
+                    <label
                       htmlFor="description"
                       className="text-gray-600 text-sm font-semibold text-center"
                     >
-                      Description
+                      Top product
                     </label>
                     <textarea
                       className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
@@ -277,42 +330,88 @@ const Profilo = () => {
                   </div>
                   <div className="w-full flex flex-col gap-2">
                     <label
-                      htmlFor="description"
+                      htmlFor="newArrival"
                       className="text-gray-600 text-sm font-semibold text-center"
                     >
-                      Description
+                      New arrival
                     </label>
                     <textarea
                       className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                      name="description"
-                      id="description"
-                      placeholder="Enter a description for your post"
-                      value={productPrompt.description}
+                      name="newArrival"
+                      id="newArrival"
+                      placeholder="Insirisci il valore qualora il prodotto sia un nuovo arrivo"
+                      value={productPrompt.NewArrival}
                       onChange={(e) =>
                         setProductPrompt({
                           ...productPrompt,
-                          description: e.target.value,
+                          NewArrival: e.target.value,
                         })
                       }
                     />
                   </div>
                   <div className="w-full flex flex-col gap-2">
                     <label
-                      htmlFor="description"
+                      htmlFor="price"
                       className="text-gray-600 text-sm font-semibold text-center"
                     >
-                      Description
+                      Count in stock
                     </label>
-                    <textarea
+                    <input
+                      type="number"
                       className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                      name="description"
-                      id="description"
-                      placeholder="Enter a description for your post"
-                      value={productPrompt.description}
+                      name="countInStock"
+                      id="countInStock"
+                      placeholder="Inerisci il prezzo del prodotto"
+                      value={productPrompt.countInStock}
                       onChange={(e) =>
                         setProductPrompt({
                           ...productPrompt,
-                          description: e.target.value,
+                          countInStock: parseFloat(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="w-full flex flex-col gap-2">
+                    <label
+                      htmlFor="features"
+                      className="text-gray-600 text-sm font-semibold text-center"
+                    >
+                      Feautures
+                    </label>
+                    <textarea
+                      className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                      name="features"
+                      id="features"
+                      placeholder="Enter a description for your post"
+                      value={productPrompt.features.toString()}
+                      onChange={(e) =>
+                        setProductPrompt({
+                          ...productPrompt,
+                          features: e.target.value
+                            .split(",")
+                            .map((s) => s.trim()),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="w-full flex flex-col gap-2">
+                    <label
+                      htmlFor="rating"
+                      className="text-gray-600 text-sm font-semibold text-center"
+                    >
+                      Rating
+                    </label>
+                    <textarea
+                      className="resize-none w-[500px] mx-auto border border-gray-200 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                      name="rating"
+                      id="rating"
+                      placeholder="Enter a description for your post"
+                      value={productPrompt.rating}
+                      onChange={(e) =>
+                        setProductPrompt({
+                          ...productPrompt,
+                          rating: parseFloat(e.target.value),
                         })
                       }
                     />
